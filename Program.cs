@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
 
 namespace CSLight
 {
@@ -14,54 +15,90 @@ namespace CSLight
 
     class Aquarium
     {
-        private const int MaxAge = 1000;
         private const int MaxFishCount = 6;
+        private const int LengthOfTheDay = 20;
+        private const int IterationTime = 1;
 
         private List<Fish> _fish;
         private int _passedDaysCount;
+        private int _passedTime;
 
         public Aquarium()
         {
             _passedDaysCount = 0;
+            _passedTime = 0;
             _fish = new List<Fish>();
+
+            for (int i = 0; i < MaxFishCount; i++)
+            {
+                AddFish();
+            }
         }
 
         private enum ActionOption
         {
             AddNewFish = 1,
-            RemoveFish,
-            SkipDay
+            RemoveFish
         }
 
         public void Work()
         {
-            while (_passedDaysCount < MaxAge)
+            while (IsAnyFishAlive())
             {
+                if (_passedTime == LengthOfTheDay)
+                {
+                    _passedTime = 0;
+                    SkipDay();
+                }
+
                 Console.Clear();
 
                 ShowDaysPassed();
                 ShowFishInfo();
                 Console.WriteLine("\n" +
-                    $"{(int)ActionOption.AddNewFish}) Добавить рыбу\n" +
-                    $"{(int)ActionOption.RemoveFish}) Убрать рыбу\n" +
-                    $"{(int)ActionOption.SkipDay}) Пропустить день" +
+                    $"{(int)ActionOption.AddNewFish}) Добавить новую рыбу\n" +
+                    $"{(int)ActionOption.RemoveFish}) Убрать мёртвых рыб\n" +
                     "\n");
 
-                switch ((ActionOption)ConsoleInputMethods.GetInt())
-                {
-                    case ActionOption.AddNewFish:
-                        AddFish();
-                        break;
-                    case ActionOption.RemoveFish:
-                        RemoveFish();
-                        break;
-                    case ActionOption.SkipDay:
-                        SkipDay();
-                        break;
-                    default:
-                        Console.WriteLine("Коменда не корректна\n");
-                        break;
-                }
+                if (Console.KeyAvailable)
+                    HandleInput();
+
+                Thread.Sleep(IterationTime);
+                _passedTime++;
+            }
+
+            ShowEndGameScreen();
+            Console.ReadKey();
+        }
+
+        private void ShowEndGameScreen()
+        {
+            Console.WriteLine("Вы проиграли, все рыбы умерли");
+        }
+
+        private bool IsAnyFishAlive()
+        {
+            int aliveFishes = 0;
+
+            foreach (var fish in _fish)
+            {
+                if (fish.IsAlive)
+                    aliveFishes++;
+            }
+
+            return aliveFishes > 0;
+        }
+
+        private void HandleInput()
+        {
+            switch (Console.ReadKey().Key)
+            {
+                case ConsoleKey.NumPad1:
+                    AddFish();
+                    break;
+                case ConsoleKey.NumPad2:
+                    RemoveDeadFishes();
+                    break;
             }
         }
 
@@ -103,33 +140,19 @@ namespace CSLight
             {
                 _fish.Add(new Fish());
             }
-            else
-            {
-                Console.WriteLine("В аквариуме слишком много рыб");
-                Console.ReadLine();
-            }
         }
 
-        private void RemoveFish()
+        private void RemoveDeadFishes()
         {
             if (_fish.Count > 0)
             {
-                Console.WriteLine("Какую рыбу хотите достать?");
-                int fishIndex = ConsoleInputMethods.GetInt() - 1;
-
-                if (fishIndex >= 0 && fishIndex < _fish.Count)
+                for (int i = _fish.Count - 1; i >= 0; i--)
                 {
-                    _fish.Remove(_fish[fishIndex]);
+                    if (_fish[i].IsAlive == false)
+                    {
+                        _fish.RemoveAt(i);
+                    }
                 }
-                else
-                {
-                    Console.WriteLine("Ошибка: не верно ");
-                }
-            }
-            else
-            {
-                Console.WriteLine("В аквариуме нет рыб, нельзя убрать");
-                Console.ReadLine();
             }
         }
 
