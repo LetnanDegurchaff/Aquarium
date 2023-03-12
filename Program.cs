@@ -14,14 +14,15 @@ namespace CSLight
 
     class Aquarium
     {
-        private const int _maxAge = 1000;
+        private const int MaxAge = 1000;
+        private const int MaxFishCount = 6;
+
         private List<Fish> _fish;
-        private int _howMuchDaysPassed;
-        private const int _maxFishCount = 6;
+        private int _passedDaysCount;
 
         public Aquarium()
         {
-            _howMuchDaysPassed = 0;
+            _passedDaysCount = 0;
             _fish = new List<Fish>();
         }
 
@@ -34,19 +35,19 @@ namespace CSLight
 
         public void Work()
         {
-            while (_howMuchDaysPassed < _maxAge)
+            while (_passedDaysCount < MaxAge)
             {
                 Console.Clear();
 
                 ShowDaysPassed();
                 ShowFishInfo();
                 Console.WriteLine("\n" +
-                    "1) Добавить рыбу\n" +
-                    "2) Убрать рыбу\n" +
-                    "3) Пропустить день" +
+                    $"{(int)ActionOption.AddNewFish}) Добавить рыбу\n" +
+                    $"{(int)ActionOption.RemoveFish}) Убрать рыбу\n" +
+                    $"{(int)ActionOption.SkipDay}) Пропустить день" +
                     "\n");
 
-                switch ((ActionOption)UserUtils.GetInt())
+                switch ((ActionOption)ConsoleInputMethods.GetInt())
                 {
                     case ActionOption.AddNewFish:
                         AddFish();
@@ -66,7 +67,7 @@ namespace CSLight
 
         private void ShowDaysPassed()
         {
-            ColorTextMaker.Write($"Прошло дней: {_howMuchDaysPassed}\n", ConsoleColor.Cyan);
+            ColorTextMaker.Write($"Прошло дней: {_passedDaysCount}\n", ConsoleColor.Cyan);
         }
 
         private void ShowFishInfo()
@@ -98,7 +99,7 @@ namespace CSLight
 
         private void AddFish()
         {
-            if (_fish.Count < _maxFishCount)
+            if (_fish.Count < MaxFishCount)
             {
                 _fish.Add(new Fish());
             }
@@ -114,7 +115,7 @@ namespace CSLight
             if (_fish.Count > 0)
             {
                 Console.WriteLine("Какую рыбу хотите достать?");
-                int fishIndex = UserUtils.GetInt() - 1;
+                int fishIndex = ConsoleInputMethods.GetInt() - 1;
 
                 if (fishIndex >= 0 && fishIndex < _fish.Count)
                 {
@@ -136,10 +137,10 @@ namespace CSLight
         {
             foreach (var fish in _fish)
             {
-                fish.SkipTime();
+                fish.Grow();
             }
 
-            _howMuchDaysPassed++;
+            _passedDaysCount++;
         }
     }
 
@@ -150,14 +151,14 @@ namespace CSLight
             int MinLifeTime = 5;
             int MaxLifeTime = 10;
             Age = 0;
-            MaxAge = RandomMethods.GetInt(MinLifeTime, MaxLifeTime);
+            MaxAge = RandomMethods.GetRandomNumber(MinLifeTime, MaxLifeTime);
         }
 
         public int MaxAge { get; private set; }
         public int Age { get; private set; }
         public bool IsAlive => Age < MaxAge;
 
-        public void SkipTime()
+        public void Grow()
         {
             if (IsAlive)
             {
@@ -179,15 +180,15 @@ namespace CSLight
 
     class RandomMethods
     {
-        static private Random random = new Random();
+        static private Random _random = new Random();
 
-        public static int GetInt(int minimum, int maximum)
+        public static int GetRandomNumber(int minimum, int maximum)
         {
-            return random.Next(minimum, maximum);
+            return _random.Next(minimum, maximum);
         }
     }
 
-    class UserUtils
+    class ConsoleInputMethods
     {
         public static int GetInt()
         {
